@@ -46,7 +46,13 @@ I do not want to put some placeholder value in place of the `inf` simply because
 
 ## Utilities
 I have removed the binaries from the release files, I believe that most people downloading the releases are there for the data.
-I will be moving the code and binaries to my [sports-stats-utilities](https://github.com/rippinrobr/sports-stats-utilities), 
+I will be moving the code and binaries to my [sports-stats-utilities](https://github.com/rippinrobr/sports-stats-utilities).
+
+## Building with Docker Compose
+1. [Install Docker Compose](https://docs.docker.com/compose/install/).
+1. Run `docker-compose up --build -d`. This will create a Docker container, download all dependencies and compile the binaries. 
+1. Enter the container by running `docker-compose run app`.
+
 ## Licensing & Acknowledgments
 
 ```

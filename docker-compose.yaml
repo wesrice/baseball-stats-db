@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  app:
+    build: .
+    environment:
+      - BDDB_INPUT_DIR=/opt/baseballdatabank
+      - RETRODB_INPUT_DIR=/opt/retrosheet
+    tty: true
+    volumes:
+      - .:/go/src/github.com/rippinrobr/baseball-stats-db
+    working_dir: /go/src/github.com/rippinrobr/baseball-stats-db
