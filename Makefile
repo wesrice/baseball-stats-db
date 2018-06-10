@@ -28,6 +28,9 @@ sched_build: $(SCHED_MAIN)
 
 build_all: databank_build sched_build gl_build
 
+get:
+	go get ./internal/... ./cmd/databank-dbloader/... ./cmd/retrosched-dbloader/... ./cmd/retrogl-dbloader/...
+
 vet: 
 	go vet -all ./internal/... ./cmd/databank-dbloader/... ./cmd/retrosched-dbloader/... ./cmd/retrogl-dbloader/...
 
