@@ -9,7 +9,9 @@ OS := $(shell uname) SEASON := 2017
 INC_VERSION := 8
 SEASON := 2017
 VERSION := $(SEASON).$(INC_VERSION)
+BDDB_INPUT_DIR ?= ~/src/baseballdatabank
 BDDB := baseball_databank_$(SEASON)
+RETRODB_INPUT_DIR ?= ~/src/retrosheet
 RETRODB := retrosheet_$(SEASON)
 STATSDB := baseball_stats_$(SEASON)
 RELEASE_DIR := release/
@@ -45,23 +47,23 @@ release_dir:
 
 sqlitedb_bd:
 	@echo "loading baseballdatabank db"
-	./bin/databank-dbloader -dbtype sqlite -dbpath=$(BDDB).sqlite3 -inputdir ~/src/baseballdatabank/core 
+	./bin/databank-dbloader -dbtype sqlite -dbpath=$(BDDB).sqlite3 -inputdir $(BDDB_INPUT_DIR)/core
 	sqlite3 $(BDDB).sqlite3 .schema >./schemas/sqlite_databank_schema_$(VERSION).sql
 	sqlite3 $(BDDB).sqlite3 .dump >./backups/sqlite_databank_backup_$(VERSION).sql
 	
 	@echo "loading baseball_stats db"
-	./bin/databank-dbloader -dbtype sqlite -dbpath=$(STATSDB).sqlite3 -inputdir ~/src/baseballdatabank/core 
+	./bin/databank-dbloader -dbtype sqlite -dbpath=$(STATSDB).sqlite3 -inputdir $(BDDB_INPUT_DIR)/core
 	sqlite3 $(STATSDB).sqlite3 .schema >./schemas/sqlite_combined_schema_$(VERSION).sql
 	sqlite3 $(STATSDB).sqlite3 .dump >./backups/sqlite_combined_backup_$(VERSION).sql
 
 sqlitedb_people:
 	@echo "loading baseballdatabank db"
-	./bin/databank-dbloader -dbtype sqlite -dbpath=$(BDDB).sqlite3 -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
+	./bin/databank-dbloader -dbtype sqlite -dbpath=$(BDDB).sqlite3 -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
 	sqlite3 $(BDDB).sqlite3 .schema >./schemas/sqlite_databank_schema_$(VERSION).sql
 	sqlite3 $(BDDB).sqlite3 .dump >./backups/sqlite_databank_backup_$(VERSION).sql
 	
 	@echo "loading baseball_stats db"
-	./bin/databank-dbloader -dbtype sqlite -dbpath=$(STATSDB).sqlite3 -inputdir ~/src/baseballdatabank/core -inputfiles People.csv 
+	./bin/databank-dbloader -dbtype sqlite -dbpath=$(STATSDB).sqlite3 -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv 
 	sqlite3 $(STATSDB).sqlite3 .schema >./schemas/sqlite_combined_schema_$(VERSION).sql
 	sqlite3 $(STATSDB).sqlite3 .dump >./backups/sqlite_combined_backup_$(VERSION).sql
 
@@ -77,15 +79,15 @@ sqlitedb_backups:
 
 sqlitedb_retro_stats_db:
 	@echo "loading the baseball_stats db"
-	./bin/retrosched-dbloader -dbtype sqlite -dbpath=./$(STATSDB).sqlite3 -inputdir ~/src/retrosheet/schedule
-	./bin/retrogl-dbloader -dbtype sqlite -dbpath=./$(STATSDB).sqlite3 -inputdir ~/src/retrosheet/gamelog
+	./bin/retrosched-dbloader -dbtype sqlite -dbpath=./$(STATSDB).sqlite3 -inputdir $(RETRODB_INPUT_DIR)/schedule
+	./bin/retrogl-dbloader -dbtype sqlite -dbpath=./$(STATSDB).sqlite3 -inputdir $(RETRODB_INPUT_DIR)/gamelog
 	sqlite3 $(STATSDB).sqlite3 .schema >./schemas/sqlite_combined_schema_$(VERSION).sql 
 	sqlite3 $(STATSDB).sqlite3 .dump >./backups/sqlite_combined_backup$(VERSION).sql 
 
 sqlitedb_retro: sqlitedb_retro_stats_db
 	@echo "loading the retrosheet db"
-	./bin/retrosched-dbloader -dbtype sqlite -dbpath=./$(RETRODB).sqlite3 -inputdir ~/src/retrosheet/schedule
-	./bin/retrogl-dbloader -dbtype sqlite -dbpath=./$(RETRODB).sqlite3 -inputdir ~/src/retrosheet/gamelog
+	./bin/retrosched-dbloader -dbtype sqlite -dbpath=./$(RETRODB).sqlite3 -inputdir $(RETRODB_INPUT_DIR)/schedule
+	./bin/retrogl-dbloader -dbtype sqlite -dbpath=./$(RETRODB).sqlite3 -inputdir $(RETRODB_INPUT_DIR)/gamelog
 	sqlite3 $(RETRODB).sqlite3 .schema >./schemas/sqlite_retrosheet_schema_$(VERSION).sql 
 	sqlite3 $(RETRODB).sqlite3 .dump >./backups/sqlite_retrosheet_backup$(VERSION).sql 
 
@@ -97,23 +99,23 @@ sqlitedb_tar:
 sqlitedb: sqlitedb_bd sqlitedb_retro sqlitedb_tar
 
 mongodb_db: 
-	./bin/databank-dbloader -dbtype mongodb -dbname $(BDDB) -inputdir ~/src/baseballdatabank/core
-	./bin/databank-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir ~/src/baseballdatabank/core
+	./bin/databank-dbloader -dbtype mongodb -dbname $(BDDB) -inputdir $(BDDB_INPUT_DIR)/core
+	./bin/databank-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir $(BDDB_INPUT_DIR)/core
 	mongodump --archive=./backups/mongodb_databank_backup_$(VERSION).archive --db $(BDDB)
 	mongodump --archive=./backups/mongodb_combined_backup_$(VERSION).archive --db $(STATSDB)
 
 mongodb_people: 
-	./bin/databank-dbloader -dbtype mongodb -dbname $(BDDB) -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
-	./bin/databank-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
+	./bin/databank-dbloader -dbtype mongodb -dbname $(BDDB) -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
+	./bin/databank-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
 	mongodump --archive=./backups/mongodb_databank_backup_$(VERSION).archive --db $(BDDB)
 	mongodump --archive=./backups/mongodb_combined_backup_$(VERSION).archive --db $(STATSDB)
 
 
 mongodb_retro:
-	./bin/retrosched-dbloader -dbtype mongodb -dbname $(RETRODB) -inputdir ~/src/retrosheet/schedule
-	./bin/retrogl-dbloader -dbtype mongodb -dbname $(RETRODB) -inputdir ~/src/retrosheet/gamelog
-	./bin/retrosched-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir ~/src/retrosheet/schedule
-	./bin/retrogl-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir ~/src/retrosheet/gamelog
+	./bin/retrosched-dbloader -dbtype mongodb -dbname $(RETRODB) -inputdir $(RETRODB_INPUT_DIR)/schedule
+	./bin/retrogl-dbloader -dbtype mongodb -dbname $(RETRODB) -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrosched-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir $(RETRODB_INPUT_DIR)/schedule
+	./bin/retrogl-dbloader -dbtype mongodb -dbname $(STATSDB) -inputdir $(RETRODB_INPUT_DIR)/gamelog
 	mongodump --archive=./backups/mongodb_retrosheet_backup_$(VERSION).archive --db $(RETRODB)
 	mongodump --archive=./backups/mongodb_combined_backup_$(VERSION).archive --db $(STATSDB)
 
@@ -128,24 +130,24 @@ mongodb_tar:
 mongodb: mongodb_db mongodb_retro mongodb_tar
 
 mysqldb_db:  
-	./bin/databank-dbloader --dbtype mysql --dbname $(BDDB) --dbuser root --dbpass itsmerob -inputdir ~/src/baseballdatabank/core
-	./bin/databank-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir ~/src/baseballdatabank/core
+	./bin/databank-dbloader --dbtype mysql --dbname $(BDDB) --dbuser root --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core
+	./bin/databank-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core
 
 mysqldb_people:  
-	./bin/databank-dbloader --dbtype mysql --dbname $(BDDB) --dbuser root --dbpass itsmerob -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
-	./bin/databank-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
+	./bin/databank-dbloader --dbtype mysql --dbname $(BDDB) --dbuser root --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
+	./bin/databank-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
 
 mysqldb_retro:
-	./bin/retrogl-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrogl-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrosched-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/schedule
-	./bin/retrosched-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/schedule
+	./bin/retrogl-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrogl-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrosched-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/schedule
+	./bin/retrosched-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/schedule
 
 mysqldb_retro_stats_db:
-	./bin/retrogl-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrogl-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrosched-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/schedule
-	./bin/retrosched-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir ~/src/retrosheet/schedule
+	./bin/retrogl-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrogl-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrosched-dbloader --dbtype mysql --dbname $(RETRODB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/schedule
+	./bin/retrosched-dbloader --dbtype mysql --dbname $(STATSDB) --dbuser root --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/schedule
 
 mysqldb_backup:
 	mysqldump -u root -p $(BDDB) >./backups/mysql_databank_backup_$(VERSION).sql
@@ -166,22 +168,22 @@ mysqldb_tar:
 mysqldb: mysqldb_db mysqldb_retro #mysqldb_tar
 
 postgresdb_db: 
-	./bin/databank-dbloader --dbtype postgres --dbname $(BDDB) --dbuser postgres --dbpass itsmerob -inputdir ~/src/baseballdatabank/core
-	./bin/databank-dbloader --dbtype postgres --dbname $(STATSDB) --dbuser postgres --dbpass itsmerob -inputdir ~/src/baseballdatabank/core
+	./bin/databank-dbloader --dbtype postgres --dbname $(BDDB) --dbuser postgres --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core
+	./bin/databank-dbloader --dbtype postgres --dbname $(STATSDB) --dbuser postgres --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core
 	pg_dump $(BDDB) >./backups/postgres_databank_backup_$(VERSION).sql
 	pg_dump $(STATSDB) >./backups/postgres_combined_backup_$(VERSION).sql
 
 postgresdb_people: 
-	./bin/databank-dbloader --dbtype postgres --dbname $(BDDB) --dbuser postgres --dbpass itsmerob -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
-	./bin/databank-dbloader --dbtype postgres --dbname $(STATSDB) --dbuser postgres --dbpass itsmerob -inputdir ~/src/baseballdatabank/core -inputfiles People.csv
+	./bin/databank-dbloader --dbtype postgres --dbname $(BDDB) --dbuser postgres --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
+	./bin/databank-dbloader --dbtype postgres --dbname $(STATSDB) --dbuser postgres --dbpass itsmerob -inputdir $(BDDB_INPUT_DIR)/core -inputfiles People.csv
 	pg_dump $(BDDB) >./backups/postgres_databank_backup_$(VERSION).sql
 	pg_dump $(STATSDB) >./backups/postgres_combined_backup_$(VERSION).sql
 
 postgresdb_retro:
-	./bin/retrogl-dbloader --dbtype postgres --dbname $(RETRODB) --dbuser postgres --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrosched-dbloader --dbtype postgres --dbname retrosheet_2017 --dbuser postgres --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrogl-dbloader --dbtype postgres --dbname baseball_stats_2017 --dbuser postgres --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
-	./bin/retrosched-dbloader --dbtype postgres --dbname baseball_stats_2017 --dbuser postgres --dbpass itsmerob -inputdir ~/src/retrosheet/gamelog
+	./bin/retrogl-dbloader --dbtype postgres --dbname $(RETRODB) --dbuser postgres --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrosched-dbloader --dbtype postgres --dbname retrosheet_2017 --dbuser postgres --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrogl-dbloader --dbtype postgres --dbname baseball_stats_2017 --dbuser postgres --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
+	./bin/retrosched-dbloader --dbtype postgres --dbname baseball_stats_2017 --dbuser postgres --dbpass itsmerob -inputdir $(RETRODB_INPUT_DIR)/gamelog
 	pg_dump retrosheet_2017 >./backups/postgres_retrosheet_backup_$(VERSION).sql
 	pg_dump baseball_stats_2017 >./backups/postgres_combined_backup_$(VERSION).sql
 
